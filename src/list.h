@@ -14,27 +14,6 @@ extern "C" {
 
 #include <stdlib.h>
 
-// Library version
-
-#define LIST_VERSION "0.2.0"
-
-// Memory management macros
-#ifdef LIST_CONFIG_H
-#define _STR(x) #x
-#define STR(x) _STR(x)
-#include STR(LIST_CONFIG_H)
-#undef _STR
-#undef STR
-#endif
-
-#ifndef LIST_MALLOC
-#define LIST_MALLOC malloc
-#endif
-
-#ifndef LIST_FREE
-#define LIST_FREE free
-#endif
-
 /*
  * list_t iterator direction.
  */
@@ -44,6 +23,9 @@ typedef enum {
   , LIST_TAIL
 } list_direction_t;
 
+typedef void list_node_obj_t;
+typedef int (*list_node_obj_match_t)(list_node_obj_t*, list_node_obj_t*);
+
 /*
  * list_t node struct.
  */
@@ -51,7 +33,7 @@ typedef enum {
 typedef struct list_node {
   struct list_node *prev;
   struct list_node *next;
-  void *val;
+  list_node_obj_t *obj;
 } list_node_t;
 
 /*
@@ -62,8 +44,7 @@ typedef struct {
   list_node_t *head;
   list_node_t *tail;
   unsigned int len;
-  void (*free)(void *val);
-  int (*match)(void *a, void *b);
+  int (*match)(list_node_obj_t *a, list_node_obj_t *b);
 } list_t;
 
 /*
@@ -76,52 +57,22 @@ typedef struct {
 } list_iterator_t;
 
 // Node prototypes.
-
-list_node_t *
-list_node_new(void *val);
+int list_node_create(list_node_t *self, list_node_obj_t *obj);
 
 // list_t prototypes.
-
-list_t *
-list_new(void);
-
-list_node_t *
-list_rpush(list_t *self, list_node_t *node);
-
-list_node_t *
-list_lpush(list_t *self, list_node_t *node);
-
-list_node_t *
-list_find(list_t *self, void *val);
-
-list_node_t *
-list_at(list_t *self, int index);
-
-list_node_t *
-list_rpop(list_t *self);
-
-list_node_t *
-list_lpop(list_t *self);
-
-void
-list_remove(list_t *self, list_node_t *node);
-
-void
-list_destroy(list_t *self);
+int list_init(list_t *self);
+list_node_t* list_rpush(list_t *self, list_node_t *node);
+list_node_t* list_rpop(list_t *self);
+list_node_t* list_lpop(list_t *self);
+list_node_t* list_lpush(list_t *self, list_node_t *node);
+list_node_t* list_find(list_t *self, list_node_obj_t *obj);
+list_node_t* list_at(list_t *self, int index);
+void list_remove(list_t *self, list_node_t *node);
 
 // list_t iterator prototypes.
-
-list_iterator_t *
-list_iterator_new(list_t *list, list_direction_t direction);
-
-list_iterator_t *
-list_iterator_new_from_node(list_node_t *node, list_direction_t direction);
-
-list_node_t *
-list_iterator_next(list_iterator_t *self);
-
-void
-list_iterator_destroy(list_iterator_t *self);
+int list_iterator_create(list_iterator_t *self, list_t *list, list_direction_t direction);
+int list_iterator_create_from_node(list_iterator_t *self, list_node_t *node, list_direction_t direction);
+list_node_t* list_iterator_next(list_iterator_t *self);
 
 #ifdef __cplusplus
 }
